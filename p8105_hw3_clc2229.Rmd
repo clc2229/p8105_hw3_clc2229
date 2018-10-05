@@ -1,0 +1,74 @@
+---
+title: "Homework 3"
+author: "Christopher Crowe"
+date: "October 5, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Problem 1
+
+The following code chunk loads the BRFSS data and conducts the following steps:
+
+* clean variable names
+* focus on the "Overall Health" topic
+* include only responses from "Excellent" to "Poor"
+* organize responses as a factor taking levels from "Excellent" to "Poor"
+
+```{r}
+devtools::install_github("p8105/p8105.datasets")
+library(p8105.datasets)
+data("brfss_smart2010")
+
+brfss_data = brfss_smart2010 %>%
+  janitor::clean_names() %>% 
+  filter(topic == "Overall Health") %>% 
+  filter(response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor") %>%
+  mutate(response = ordered(response, levels = c("Poor", "Fair", "Good", "Very good", "Excellent")))
+```
+
+Using this cleaned dataset, we can answer/perform the following questions/tasks of interest. 
+
+* Q: In 2002, which states were observed at 7 locations?
+```{r}
+brfss_data %>% 
+  filter(year == 2002) %>% 
+  distinct(locationabbr, locationdesc) %>% 
+  group_by(locationabbr) %>% 
+  summarize(observed_locations = n()) %>% 
+  filter(observed_locations == 7) %>% 
+  knitr::kable()
+```
+
+
+* A: According to the table above, Connecticut, Florida, and North Carolina each have observations from 7 distinct locations in 2002.
+
+
+
+ * Make a “spaghetti plot” that shows the number of observations in each state from 2002 to 2010.
+  
+
+* Q: Make a table showing, for the years 2002, 2006, and 2010, the mean and standard deviation of the proportion of “Excellent” responses across locations in NY State.
+
+```{r}
+brfss_data %>% 
+  filter(locationabbr == "NY" & response == "Excellent" & (year == 2002 | year == 2006 | year == 2010)) %>% 
+  mutate(proportion_excellent = data_value / 100) %>% 
+  group_by(year) %>% 
+  summarize(mean_proportion_excellent = mean(proportion_excellent), sd_proportion_excellent = sd(proportion_excellent)) %>% 
+  knitr::kable()
+```
+
+
+ 
+ * A: From this table, we can see that the proportion of individuals in NY with excellent overall health has decreased from 0.24 in 2002 but has remained somewhat constant around 0.22 since 2006. 
+
+
+
+
+
+
