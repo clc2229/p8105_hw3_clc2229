@@ -67,7 +67,7 @@ brfss_data %>%
       caption = "Data from BRFSS"
     ) +
     viridis::scale_color_viridis(
-      name = "locationabbr",
+      name = "State",
       discrete = TRUE
     ) +
     theme_bw() +
@@ -114,6 +114,7 @@ brfss_data %>%
       caption = "Data from BRFSS"
     ) +
     viridis::scale_color_viridis(
+      name = "State",
       discrete = TRUE
     ) +
     theme_bw() +
@@ -171,3 +172,63 @@ instacart %>%
 
 * Q: How many aisles are there, and which aisles are the most items ordered from?
 * A: There are `r instacart %>% distinct(aisle_id) %>% nrow()` aisles. The table below shows the aisle ID and name from which the most items are ordered (top 5). `r instacart %>% group_by(aisle_id, aisle) %>% summarize(order_count = n()) %>% arrange(desc(order_count)) %>% head(5) %>% knitr::kable()`
+
+### Part B
+
+```{r}
+instacart %>% 
+  group_by(aisle_id, department) %>% 
+  summarize(order_count = n()) %>% 
+  ggplot(aes(x = aisle_id, y = department)) +
+    geom_point(aes(size = order_count)) +
+    scale_x_continuous(breaks = c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140)) +
+    labs(
+     title = "Order Count by Aisle",
+     x = "Aisle ID",
+     y = "Department"
+    ) +
+    theme_bw() +
+    theme(legend.position = "bottom")
+```
+
+* Q: Make a plot that shows the number of items ordered in each aisle. Order aisles sensibly, and organize your plot so others can read it.
+
+* A: The above plot attempts to display the number of items ordered in each aisle in an understandable format. On this plot, The `order_count` is indicated by the size of the data point, with larger data points representing a larger number of orders In addition to this, since `aisle_id` provides little information on its own, the corresponding `department` is listed on the y-axis. Using this layout, we can, for example, see that most orders are coming from Aisles 24 and 83 in the produce department. We can also see which aisle, within a given department, has the largest number of orders. 
+
+### Part C
+
+```{r}
+instacart %>% 
+  filter(aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>% 
+  group_by(product_name, aisle) %>% 
+  summarize(order_count = n()) %>% 
+  arrange(desc(order_count)) %>% 
+  group_by(aisle) %>% 
+  top_n(n = 1, wt = order_count) %>% 
+  rename(top_product_name = product_name) %>% 
+  select(aisle, top_product_name, order_count) %>% 
+  arrange(aisle) %>% 
+  knitr::kable()
+
+```
+
+* Q: Make a table showing the most popular item aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”
+
+* A: According to the table above, the most popular items in the "baking ingredients", "dog food care", and "packaged vegetables fruits" aisles are Light Brown Sugar, Snack Sticks Chicken & Rice Recipe Dog Treats, and Organic Baby Spinach, respectively. 
+
+### Part D
+
+```{r}
+instacart %>% 
+  filter(product_name == "Pink Lady Apples" | product_name == "Coffee Ice Cream") %>% 
+  select(product_name, order_dow, order_hour_of_day) %>% 
+  group_by(product_name, order_dow) %>% 
+  summarize(mean_order_time = mean(order_hour_of_day)) %>% 
+  spread(key = order_dow, value = mean_order_time) %>% 
+  knitr::kable()
+  
+```
+
+Q: Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table).
+
+A: The above table is useful in comparing the times at which Pink Lady Apples and Coffee Ice Cream are ordered. For example, we can see that Pink Lady Apples are typically ordered earlier than Coffee Ice Cream. However, the table could be improved if we knew how days of the week were coded. As it is, we do not know which number corresponds to which day of the week, though we may assume Day 0 is either Sunday or Monday. 
