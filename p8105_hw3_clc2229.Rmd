@@ -32,9 +32,10 @@ brfss_data = brfss_smart2010 %>%
   mutate(response = ordered(response, levels = c("Poor", "Fair", "Good", "Very good", "Excellent")))
 ```
 
-Using this cleaned dataset, we can answer/perform the following questions/tasks of interest: 
+Using this cleaned dataset, we can answer/perform the following questions/tasks of interest with the following code chunks: 
 
-* Q: In 2002, which states were observed at 7 locations?
+### Part A
+
 ```{r}
 brfss_data %>% 
   filter(year == 2002) %>% 
@@ -45,12 +46,12 @@ brfss_data %>%
   knitr::kable()
 ```
 
+* Q: In 2002, which states were observed at 7 locations?
 
 * A: According to the table above, Connecticut, Florida, and North Carolina each have observations from 7 distinct locations in 2002.
 
 
-
- * Q: Make a “spaghetti plot” that shows the number of observations in each state from 2002 to 2010.
+### Part B
   
 ```{r}
 brfss_data %>% 
@@ -73,9 +74,11 @@ brfss_data %>%
     theme(legend.position = "bottom")
 ```
 
+* Q: Make a “spaghetti plot” that shows the number of observations in each state from 2002 to 2010.
+
 * A: The above "spaghetti plot" shows how many observations there were in each state by year, from 2002 to 2010. However, this graph is not very informative because it is difficult to distinguish the colors of the lines. While we we can that one state in particular had an unusually high number of observations in 2007, it is hard to tell which state corresponds to this color. Additionally, because there are so many lines on top of each other at the bottom of the graph, it is extremely difficult to distinguish one line from another. 
 
-* Q: Make a table showing, for the years 2002, 2006, and 2010, the mean and standard deviation of the proportion of “Excellent” responses across locations in NY State.
+### Part C
 
 ```{r}
 brfss_data %>% 
@@ -86,11 +89,13 @@ brfss_data %>%
   knitr::kable()
 ```
 
+* Q: Make a table showing, for the years 2002, 2006, and 2010, the mean and standard deviation of the proportion of “Excellent” responses across locations in NY State.
  
- * A: From this table, we can see that the proportion of individuals in NY with excellent overall health has decreased from 0.24 in 2002 but has remained somewhat constant around 0.22 since 2006. 
+ * A: From this table, we can see that the mean proportion of individuals in NY with excellent overall health has decreased from 0.24 in 2002 but has remained somewhat constant around 0.22 since 2006. Additionally, the standard deviation has steadily decreased by a small amount from 2002 to 2010.
+
+### Part D
 
 
-* Q: For each year and state, compute the average proportion in each response category (taking the average across locations in a state). Make a five-panel plot that shows, for each response category separately, the distribution of these state-level averages over time.
 
 ```{r}
 
@@ -115,7 +120,54 @@ brfss_data %>%
     theme(legend.position = "bottom")
 ```
 
+* Q: For each year and state, compute the average proportion in each response category (taking the average across locations in a state). Make a five-panel plot that shows, for each response category separately, the distribution of these state-level averages over time.
+
 * A: In the above graphs, it is still hard to distinguish which data point corresponds to which state, but this graphical representation is successful in showing differences in the overall mean proportions of responses. For example, we can see that across all years and states, there were relatively few "Poor" responses and a much larger proportion of "Very good" responses. We can also see that on average, the proportion of "Poor" responses had less variation (ranging from ~0.0 to ~0.1 for "Poor" vs. ~0.275 to ~4.25 for "Very good"). Additionally, we can identify the presence of outliers even if it may be difficult to discern the state (e.g. it looks like either WY or WV had a much lower proportion of excellent reponses in 2005 compared to all other states).
 
+## Problem 2
 
+```{r, include  = FALSE}
+library(p8105.datasets)
+data("instacart")
 
+## testing code to be used for inline code below
+
+## count number of rows and columns
+nrow(instacart)
+ncol(instacart)
+
+## extract example values from cells for key variables
+instacart %>% 
+  select(user_id) %>% 
+  head(1)
+
+instacart %>% 
+  select(product_name) %>% 
+  head(1)
+
+instacart %>% 
+  select(department) %>% 
+  head(1)
+
+```
+
+The `instacart` dataset consists of `r nrow(instacart)` rows and `r ncol(instacart)` columns. This dataset contains a variety of information regarding food items sold in a store and relevant order details. The dataset is structured so that each row represents a unique combination of `order_id` and `product_id`. In other words, each row represents one product that was included in a given order, and the contents of the entire order span numerous rows that each begin with the same `order_id`. In addition to these two important variables, other variables of interest may include `user_id` (e.g., `r instacart %>% select(user_id) %>% head(1)`, a unique ID given to the customer who placed the order), `product_name` (e.g., `r instacart %>% select(product_name) %>% head(1)`, the full name of the product), and `department` (e.g., `r instacart %>% select(department) %>% head(1)`, the department of the store where the product can be found).
+
+Using the `instacart` dataset, we can answer/do the following questions/tasks with the following code chunks.
+
+### Part A
+
+```{r, eval = FALSE}
+instacart %>% 
+  distinct(aisle_id) %>% 
+  nrow()
+
+instacart %>% 
+  group_by(aisle_id, aisle) %>% 
+  summarize(order_count = n()) %>% 
+  arrange(desc(order_count)) %>% 
+  head(5) %>% knitr::kable()
+```
+
+* Q: How many aisles are there, and which aisles are the most items ordered from?
+* A: There are `r instacart %>% distinct(aisle_id) %>% nrow()` aisles. The table below shows the aisle ID and name from which the most items are ordered (top 5). `r instacart %>% group_by(aisle_id, aisle) %>% summarize(order_count = n()) %>% arrange(desc(order_count)) %>% head(5) %>% knitr::kable()`
