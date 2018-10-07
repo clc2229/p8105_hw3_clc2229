@@ -232,3 +232,45 @@ instacart %>%
 Q: Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table).
 
 A: The above table is useful in comparing the times at which Pink Lady Apples and Coffee Ice Cream are ordered. For example, we can see that Pink Lady Apples are typically ordered earlier than Coffee Ice Cream. However, the table could be improved if we knew how days of the week were coded. As it is, we do not know which number corresponds to which day of the week, though we may assume Day 0 is either Sunday or Monday. 
+
+## Problem 3
+
+```{r, include = FALSE}
+library(p8105.datasets)
+data("ny_noaa")
+
+## testing code to be used for inline code below
+
+## count number of rows and columns
+nrow(ny_noaa)
+ncol(ny_noaa)
+
+## extract example values from cells for key variables
+ny_noaa %>% 
+  select(id) %>%
+  head(1)
+
+ny_noaa %>% 
+  select(date) %>% 
+  head(1)
+
+ny_noaa %>% 
+  select(prcp) %>% 
+  filter(prcp != "NA") %>%
+  head(1)
+
+ny_noaa %>% 
+  select(tmax) %>% 
+  filter(tmax != "NA") %>%
+  head(1)
+
+## count the number of rows where something is missing
+ny_noaa %>% 
+  filter(is.na(tmax) | is.na(tmin) | is.na(prcp) | is.na(snow) | is.na(snwd)) %>% 
+  nrow()
+
+```
+
+The `ny_noaa` dataset consists of `r nrow(ny_noaa)` rows and `r ncol(ny_noaa)` columns. This dataset contains a variety of weather information recorded by five weather stations across New York state. The dataset is structured so that each row represents the weather information for a particular weather station on any given day. Examples of key variables include  `id` (e.g., `r ny_noaa %>% select(id) %>% head(1)`, a unique ID given to each of the five NOAA weather stations in New York state), `date` (e.g., `r ny_noaa %>% select(date) %>% head(1)`, the date on which the data was recorded), `prcp` (e.g., `r ny_noaa %>% select(prcp) %>% filter(prcp != "NA") %>% head(1)`, the amount of precipitation in tenths of a millimeter), and `tmax` (e.g., `r ny_noaa %>% select(tmax) %>% filter(tmax != "NA") %>% head(1)`, the maximum temperature in tenths of a degree Celsius). This dataset has a large number of missing values, with `r ny_noaa %>% filter(is.na(tmax) | is.na(tmin) | is.na(prcp) | is.na(snow) | is.na(snwd)) %>% nrow()` observations where at least one piece of weather information is missing. 
+
+Using the `ny_noaa` dataset, we can answer/do the following questions/tasks with the following code chunks.
