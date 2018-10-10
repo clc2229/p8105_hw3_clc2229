@@ -56,9 +56,10 @@ brfss_data %>%
 ```{r}
 brfss_data %>% 
   filter(year >= 2002 & year <= 2010) %>% 
-  group_by(locationabbr, year) %>% 
-  summarize(observations = sum(sample_size)) %>% 
-  ggplot(aes(x = year, y = observations, color = locationabbr)) +
+  group_by(locationabbr, year) %>%  
+  distinct(locationdesc) %>% 
+  summarize(location_count = n()) %>%
+  ggplot(aes(x = year, y = location_count, color = locationabbr)) +
     geom_line(size = 0.1) +
     labs(
       title = "Observation Plot",
@@ -71,12 +72,13 @@ brfss_data %>%
       discrete = TRUE
     ) +
     theme_bw() +
-    theme(legend.position = "bottom")
+    theme(legend.position = "bottom") +
+    guides(color = guide_legend(nrow = 6))
 ```
 
 * Q: Make a “spaghetti plot” that shows the number of observations in each state from 2002 to 2010.
 
-* A: The above "spaghetti plot" shows how many observations there were in each state by year, from 2002 to 2010. However, this graph is not very informative because it is difficult to distinguish the colors of the lines. While we we can that one state in particular had an unusually high number of observations in 2007, it is hard to tell which state corresponds to this color. Additionally, because there are so many lines on top of each other at the bottom of the graph, it is extremely difficult to distinguish one line from another. 
+* A: The above "spaghetti plot" shows how many locations were in each state by year, from 2002 to 2010. However, this graph is not very informative because it is difficult to distinguish the colors of the lines. While we we can that one state in particular had an unusually high number of locations in 2007, it is hard to tell which state corresponds to this color. Additionally, because there are so many lines on top of each other at the bottom of the graph, it is extremely difficult to distinguish one line from another. 
 
 ### Part C
 
@@ -104,7 +106,7 @@ brfss_data %>%
   group_by(year, locationabbr, response) %>% 
   summarize(mean_proportion = mean(proportion)) %>% 
   ggplot(aes(x = year, y = mean_proportion, color = locationabbr)) +
-    geom_point() +
+    geom_point(alpha = 0.5) +
     scale_x_continuous(breaks = c(2003, 2006, 2009)) +
     facet_grid(~response) +
     labs(
@@ -118,7 +120,8 @@ brfss_data %>%
       discrete = TRUE
     ) +
     theme_bw() +
-    theme(legend.position = "bottom")
+    theme(legend.position = "bottom") +
+    guides(color = guide_legend(nrow = 6))
 ```
 
 * Q: For each year and state, compute the average proportion in each response category (taking the average across locations in a state). Make a five-panel plot that shows, for each response category separately, the distribution of these state-level averages over time.
@@ -274,3 +277,120 @@ ny_noaa %>%
 The `ny_noaa` dataset consists of `r nrow(ny_noaa)` rows and `r ncol(ny_noaa)` columns. This dataset contains a variety of weather information recorded by five weather stations across New York state. The dataset is structured so that each row represents the weather information for a particular weather station on any given day. Examples of key variables include  `id` (e.g., `r ny_noaa %>% select(id) %>% head(1)`, a unique ID given to each of the five NOAA weather stations in New York state), `date` (e.g., `r ny_noaa %>% select(date) %>% head(1)`, the date on which the data was recorded), `prcp` (e.g., `r ny_noaa %>% select(prcp) %>% filter(prcp != "NA") %>% head(1)`, the amount of precipitation in tenths of a millimeter), and `tmax` (e.g., `r ny_noaa %>% select(tmax) %>% filter(tmax != "NA") %>% head(1)`, the maximum temperature in tenths of a degree Celsius). This dataset has a large number of missing values, with `r ny_noaa %>% filter(is.na(tmax) | is.na(tmin) | is.na(prcp) | is.na(snow) | is.na(snwd)) %>% nrow()` observations where at least one piece of weather information is missing. 
 
 Using the `ny_noaa` dataset, we can answer/do the following questions/tasks with the following code chunks.
+
+### Part A
+
+```{r}
+cleaned_ny_noaa = ny_noaa %>% 
+  janitor::clean_names() %>% 
+  separate(date, into = c("year", "month", "day"), sep = "-") %>% 
+  mutate(prcp = prcp / 10, tmax = as.integer(tmax) / 10, tmin = as.integer(tmin) / 10)
+
+```
+
+```{r, eval = FALSE}
+cleaned_ny_noaa %>% 
+  group_by(snow) %>% 
+  summarize(freq = n()) %>% 
+  arrange(desc(freq)) %>% 
+  select(snow) %>% 
+  head(1)
+```
+
+* Q: Do some data cleaning. Create separate variables for year, month, and day. Ensure observations for temperature, precipitation, and snowfall are given in reasonable units. For snowfall, what are the most commonly observed values? Why?
+
+* A: With `r cleaned_ny_noaa %>% group_by(snow) %>% summarize(freq = n()) %>% arrange(desc(freq)) %>% select(freq) %>% head(1)` observations, the most commonly observed value for snowfall is `r cleaned_ny_noaa %>% group_by(snow) %>% summarize(freq = n()) %>% arrange(desc(freq)) %>% select(snow) %>% head(1)`. This is likely due to the fact that most days of the year have no snowfall (i.e. it typically does not snow during the spring, summer, and fall)
+
+### Part B
+
+```{r}
+cleaned_ny_noaa %>% 
+  filter(tmin != "NA" & tmax != "NA" & (month == "01" | month == "07")) %>% 
+  mutate(month = month.name[as.integer(month)]) %>% 
+  mutate(avg_temp = (tmin + tmax) / 2) %>% 
+  group_by(id, year, month) %>% 
+  summarize(monthly_avg_temp = mean(avg_temp)) %>%
+  ggplot(aes(x = year, y = monthly_avg_temp, color = id)) +
+    geom_point(alpha = 0.3) +
+    scale_x_discrete(breaks = c(1983, 1988, 1993, 1998, 2003, 2008)) +
+    labs(
+      x = "Year",
+      y = "Average Temp. (°C)",
+      title = "Average Temperatures for January and July in New York",
+      caption = "Data from NOAA"
+    ) +
+    viridis::scale_color_viridis(
+      discrete = TRUE,
+      name = "ID"
+    ) +
+    theme_bw() +
+    theme(legend.position = "bottom", legend.text = element_text(size = 4), legend.key.size = unit(1, "point")) +
+    guides(color = guide_legend(nrow = 22)) +
+    facet_grid(~month)
+
+```
+
+
+* Q: Make a two-panel plot showing the average temperature in January and in July in each station across years. Is there any observable/interpretable structure? Any outliers?
+
+* A: We can see a few things from the two-panel plot above. First, as expected, we can see that the average temperature across all locations is lower in January (i.e. winter) than it is in July (i.e. summer). Additionally, we can see that there tends to be greater variation in average temperature across locations in January than in July. While it is difficult to distinguish specific locations due to the large number of weather stations included in the plot, we are able to see outliers. For example, we can see that one of the stations experienced a particularly cold January in 1993. Overall, it does not appear that there have been any major changes in average temperature over the years, aside from slight variations from year to year. 
+
+### Part C
+
+```{r}
+
+cleaned_ny_noaa %>% 
+  gather(key = min_max, value = temp, tmin:tmax) %>% 
+  filter(temp != "NA") %>% 
+  ggplot(aes(x = temp, fill = month)) +
+    geom_density(alpha = 0.4) +
+    labs(
+      x = "Temperature (°C)",
+      y = "Density",
+      title = "Minimum & Maximum Temperatures",
+      caption = "Data from NOAA"
+    ) +
+    viridis::scale_fill_viridis(
+      discrete = TRUE,
+      name = "Month"
+    ) +
+    theme_bw() +
+    theme(legend.position = "bottom") +
+    facet_grid(~min_max)
+
+cleaned_ny_noaa %>% 
+  gather(key = min_max, value = temp, tmin:tmax) %>% 
+  filter(temp != "NA") %>% 
+  ggplot(aes(y = temp)) +
+    geom_boxplot() +
+    scale_x_continuous(breaks = c(0)) +
+    labs(
+      y = "Temperature (°C)",
+      title = "Boxplots of Min & Max Temperatures",
+      caption = "Data from NOAA"
+    ) +
+    facet_grid(~min_max)
+
+
+cleaned_ny_noaa %>% 
+  filter(snow > 0 & snow < 100 & snow != "NA") %>% 
+  ggplot(aes(x = snow, fill = year)) +
+    geom_density(alpha = 0.3) +
+    labs(
+      x = "Snowfall (mm)",
+      y = "Density",
+      title = "Distribution of Snowfall by Year",
+      caption = "Data from NOAA"
+    ) +
+    viridis::scale_fill_viridis(
+      discrete = TRUE,
+      name = "Year"
+    )
+
+ 
+```
+
+
+* Q: Make a two-panel plot showing (i) `tmax` vs `tmin` for the full dataset; and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year
+
+* A: (i) .... (ii) 
